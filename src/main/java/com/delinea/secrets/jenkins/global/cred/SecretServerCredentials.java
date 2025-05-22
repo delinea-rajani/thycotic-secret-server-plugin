@@ -23,6 +23,7 @@ import com.delinea.secrets.jenkins.wrapper.cred.UserCredentials;
 
 import hudson.Extension;
 import hudson.model.Item;
+import hudson.model.Descriptor.FormException;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -47,10 +48,11 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 	 * @param vaultUrl      - The URL of the Secret Server.
 	 * @param credentialId- The ID of the credentials stored in Jenkins.
 	 * @param secretId      - The ID of the secret stored in the Secret Server.
+	 * @throws FormException 
 	 */
 	@DataBoundConstructor
 	public SecretServerCredentials(final CredentialsScope scope, final String id, final String description, String vaultUrl,
-			String credentialId, String secretId, String usernameSlug,String passwordSlugName) {
+			String credentialId, String secretId, String usernameSlug,String passwordSlugName) throws FormException {
 		super(scope, id, description, null, null);
 		this.usernameSlug = usernameSlug;
 		this.passwordSlugName = passwordSlugName;
