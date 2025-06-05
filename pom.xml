@@ -34,7 +34,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-${jenkins.baseline}.x</artifactId>
-        <version>3944.v1a_e4f8b_452db_</version>
+                <version>3944.v1a_e4f8b_452db_</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -167,6 +167,7 @@
 				<groupId>org.jenkins-ci.tools</groupId>
 				<artifactId>maven-hpi-plugin</artifactId>
 				<configuration>
+					<disabledTestInjection>true</disabledTestInjection>
 					<pluginFirstClassLoader>true</pluginFirstClassLoader>
 				</configuration>
 			</plugin>
