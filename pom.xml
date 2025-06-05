@@ -167,7 +167,6 @@
 				<groupId>org.jenkins-ci.tools</groupId>
 				<artifactId>maven-hpi-plugin</artifactId>
 				<configuration>
-					<disabledTestInjection>true</disabledTestInjection>
 					<pluginFirstClassLoader>true</pluginFirstClassLoader>
 				</configuration>
 			</plugin>
