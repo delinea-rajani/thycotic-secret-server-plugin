@@ -8,16 +8,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
 
-import com.thycotic.secrets.server.spring.Secret;
-import com.thycotic.secrets.server.spring.SecretServer;
-import com.thycotic.secrets.server.spring.SecretServerFactoryBean;
+import com.delinea.secrets.server.spring.Secret;
+import com.delinea.secrets.server.spring.SecretServer;
+import com.delinea.secrets.server.spring.SecretServerFactoryBean;
 
 
 public class VaultClient {
-	private static final String USERNAME_PROPERTY = "secret_server.oauth2.username";
-	private static final String PASSWORD_PROPERTY = "secret_server.oauth2.password";
-	private static final String API_ROOT_URL_PROPERTY = "secret_server.api_root_url";
-	private static final String OAUTH2_TOKEN_URL_PROPERTY = "secret_server.oauth2.token_url";
+	private static final String USERNAME_PROPERTY = "server_username";
+	private static final String PASSWORD_PROPERTY = "server_password";
+	private static final String API_ROOT_URL_PROPERTY = "server_url";
+//	private static final String OAUTH2_TOKEN_URL_PROPERTY = "secret_server.oauth2.token_url";
 
 	public VaultClient() {
 	}
@@ -44,8 +44,8 @@ public class VaultClient {
 		// Remove trailing slash from the Vault URL if present
 		String ssurl = StringUtils.removeEnd(vaultUrl, "/");
 		if (StringUtils.isNotBlank(ssurl)) {
-			properties.put(API_ROOT_URL_PROPERTY, ssurl + "/api/v1");
-			properties.put(OAUTH2_TOKEN_URL_PROPERTY, ssurl + "/oauth2/token");
+			properties.put(API_ROOT_URL_PROPERTY, ssurl );
+//			properties.put(OAUTH2_TOKEN_URL_PROPERTY, ssurl + "/oauth2/token");
 		}
 
 		properties.put(USERNAME_PROPERTY, username);

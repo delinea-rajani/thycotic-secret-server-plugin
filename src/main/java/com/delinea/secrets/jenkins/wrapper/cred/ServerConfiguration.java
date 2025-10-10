@@ -27,8 +27,8 @@ import jenkins.model.Jenkins;
 @Extension
 @Symbol("secretServer")
 public class ServerConfiguration extends GlobalConfiguration {
-    public static final String DEFAULT_API_PATH_URI = "/api/v1";
-    public static final String DEFAULT_TOKEN_PATH_URI = "/oauth2/token";
+//    public static final String DEFAULT_API_PATH_URI = "/api/v1";
+//    public static final String DEFAULT_TOKEN_PATH_URI = "/oauth2/token";
     public static final String DEFAULT_ENVIRONMENT_VARIABLE_PREFIX = "TSS_";
 
     /**
@@ -58,7 +58,8 @@ public class ServerConfiguration extends GlobalConfiguration {
         }
     }
 
-    private String credentialId, baseUrl, apiPathUri = DEFAULT_API_PATH_URI, tknPathUri = DEFAULT_TOKEN_PATH_URI,
+    private String credentialId, baseUrl, apiPathUri, 
+//    		tknPathUri = DEFAULT_TOKEN_PATH_URI,
             environmentVariablePrefix = DEFAULT_ENVIRONMENT_VARIABLE_PREFIX;
 
     /**
@@ -76,9 +77,9 @@ public class ServerConfiguration extends GlobalConfiguration {
      * @return the composition of {@link #getBaseUrl()} and
      *         {@link #getTokenPathUri()}
      */
-    String getTokenUrl() {
-        return getBaseUrl() + getTokenPathUri();
-    }
+//    String getTokenUrl() {
+//        return getBaseUrl() + getTokenPathUri();
+//    }
 
     public ServerConfiguration() {
         load();
@@ -141,13 +142,13 @@ public class ServerConfiguration extends GlobalConfiguration {
         save();
     }
 
-    public String getTokenPathUri() {
-        return tknPathUri;
-    }
-
-    @DataBoundSetter
-    public void setTokenPathUri(final String tokenPathUri) {
-        this.tknPathUri = StringUtils.strip(tokenPathUri);
-        save();
-    }
+//    public String getTokenPathUri() {
+//        return tknPathUri;
+//    }
+//
+//    @DataBoundSetter
+//    public void setTokenPathUri(final String tokenPathUri) {
+//        this.tknPathUri = StringUtils.strip(tokenPathUri);
+//        save();
+//    }
 }

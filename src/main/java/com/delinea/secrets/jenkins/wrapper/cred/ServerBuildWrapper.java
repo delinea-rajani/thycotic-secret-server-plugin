@@ -6,16 +6,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.thycotic.secrets.server.spring.Secret;
-import com.thycotic.secrets.server.spring.SecretServer;
-import com.thycotic.secrets.server.spring.SecretServerFactoryBean;
-
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
+
+import com.delinea.secrets.server.spring.Secret;
+import com.delinea.secrets.server.spring.SecretServer;
+import com.delinea.secrets.server.spring.SecretServerFactoryBean;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -30,10 +30,10 @@ import hudson.tasks.BuildWrapperDescriptor;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class ServerBuildWrapper extends SimpleBuildWrapper {
-    private static final String USERNAME_PROPERTY = "secret_server.oauth2.username";
-    private static final String PASSWORD_PROPERTY = "secret_server.oauth2.password";
-    private static final String API_ROOT_URL_PROPERTY = "secret_server.api_root_url";
-    private static final String OAUTH2_TOKEN_URL_PROPERTY = "secret_server.oauth2.token_url";
+    private static final String USERNAME_PROPERTY = "server_username";
+    private static final String PASSWORD_PROPERTY = "server_password";
+    private static final String API_ROOT_URL_PROPERTY = "server_url";
+//    private static final String OAUTH2_TOKEN_URL_PROPERTY = "secret_server.oauth2.token_url";
 
     private List<ServerSecret> secrets;
     private List<String> valuesToMask = new ArrayList<>();
@@ -65,14 +65,14 @@ public class ServerBuildWrapper extends SimpleBuildWrapper {
 
         // these may be overridden by the secret below
         properties.put(API_ROOT_URL_PROPERTY, configuration.getAPIUrl());
-        properties.put(OAUTH2_TOKEN_URL_PROPERTY, configuration.getTokenUrl());
+//        properties.put(OAUTH2_TOKEN_URL_PROPERTY, configuration.getTokenUrl());
         secrets.forEach(serverSecret -> {
             final String overrideBaseURL = serverSecret.getBaseUrl();
             final String overrideUserCredentialId = serverSecret.getCredentialId();
 
             if (StringUtils.isNotBlank(overrideBaseURL)) {
                 properties.put(API_ROOT_URL_PROPERTY, overrideBaseURL + configuration.getApiPathUri());
-                properties.put(OAUTH2_TOKEN_URL_PROPERTY, overrideBaseURL + configuration.getTokenPathUri());
+//                properties.put(OAUTH2_TOKEN_URL_PROPERTY, overrideBaseURL + configuration.getTokenPathUri());
             }
 
             final UserCredentials credential;
