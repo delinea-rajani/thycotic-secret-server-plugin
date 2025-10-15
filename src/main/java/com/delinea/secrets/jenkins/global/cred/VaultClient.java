@@ -8,9 +8,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
 
-import com.thycotic.secrets.server.spring.Secret;
-import com.thycotic.secrets.server.spring.SecretServer;
-import com.thycotic.secrets.server.spring.SecretServerFactoryBean;
+import com.delinea.secrets.server.spring.Secret;
+import com.delinea.secrets.server.spring.SecretServer;
+import com.delinea.secrets.server.spring.SecretServerFactoryBean;
+
+import hudson.ProxyConfiguration;
+import jenkins.model.Jenkins;
 
 
 public class VaultClient {
@@ -50,7 +53,7 @@ public class VaultClient {
 
 		properties.put(USERNAME_PROPERTY, username);
 		properties.put(PASSWORD_PROPERTY, password);
-
+		
 		// Create and configure the application context with the Secret Server
 		try (AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext()) {
 			applicationContext.getEnvironment().getPropertySources()

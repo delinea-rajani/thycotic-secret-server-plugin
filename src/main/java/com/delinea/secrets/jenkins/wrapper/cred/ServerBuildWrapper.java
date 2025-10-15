@@ -6,16 +6,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.thycotic.secrets.server.spring.Secret;
-import com.thycotic.secrets.server.spring.SecretServer;
-import com.thycotic.secrets.server.spring.SecretServerFactoryBean;
-
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
+
+import com.delinea.secrets.server.spring.Secret;
+import com.delinea.secrets.server.spring.SecretServer;
+import com.delinea.secrets.server.spring.SecretServerFactoryBean;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -34,6 +34,12 @@ public class ServerBuildWrapper extends SimpleBuildWrapper {
     private static final String PASSWORD_PROPERTY = "secret_server.oauth2.password";
     private static final String API_ROOT_URL_PROPERTY = "secret_server.api_root_url";
     private static final String OAUTH2_TOKEN_URL_PROPERTY = "secret_server.oauth2.token_url";
+    
+ // Proxy property names for SecretServerFactoryBean
+    private static final String PROXY_HOST_PROPERTY = "secret_server.proxy.host";
+    private static final String PROXY_PORT_PROPERTY = "secret_server.proxy.port";
+    private static final String PROXY_USERNAME_PROPERTY = "secret_server.proxy.username";
+    private static final String PROXY_PASSWORD_PROPERTY = "secret_server.proxy.password";
 
     private List<ServerSecret> secrets;
     private List<String> valuesToMask = new ArrayList<>();
@@ -57,6 +63,7 @@ public class ServerBuildWrapper extends SimpleBuildWrapper {
     	return new ServerConsoleLogFilter(build.getCharset().name(), valuesToMask);
     }
 
+    
     @Override
     public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher,
             final TaskListener listener, final EnvVars initialEnvironment) throws IOException, InterruptedException {
@@ -67,9 +74,29 @@ public class ServerBuildWrapper extends SimpleBuildWrapper {
         properties.put(API_ROOT_URL_PROPERTY, configuration.getAPIUrl());
         properties.put(OAUTH2_TOKEN_URL_PROPERTY, configuration.getTokenUrl());
         secrets.forEach(serverSecret -> {
+        	 // Print proxy details coming from Jelly form inputs
+            listener.getLogger().println("[ServerBuildWrapper] ---------- Proxy Details (from ServerSecret) ----------");
+            listener.getLogger().println("    Proxy Host     : " + StringUtils.defaultString(serverSecret.getProxyHost(), "(none)"));
+            listener.getLogger().println("    Proxy Port     : " + (serverSecret.getProxyPort() != 0 ? serverSecret.getProxyPort() : "(none)"));
+            listener.getLogger().println("    Proxy Username : " + StringUtils.defaultString(serverSecret.getProxyUsername(), "(none)"));
+            listener.getLogger().println("    Proxy Password : " + (StringUtils.isNotBlank(serverSecret.getProxyPassword()) ? "********" : "(none)"));
+            listener.getLogger().println("----------------------------------------------------------");
             final String overrideBaseURL = serverSecret.getBaseUrl();
             final String overrideUserCredentialId = serverSecret.getCredentialId();
 
+         // Add proxy settings to properties if configured
+            if (StringUtils.isNotBlank(serverSecret.getProxyHost()) && serverSecret.getProxyPort() > 0) {
+                properties.put(PROXY_HOST_PROPERTY, serverSecret.getProxyHost());
+                properties.put(PROXY_PORT_PROPERTY, serverSecret.getProxyPort());
+
+                if (StringUtils.isNotBlank(serverSecret.getProxyUsername())) {
+                    properties.put(PROXY_USERNAME_PROPERTY, serverSecret.getProxyUsername());
+                }
+                if (StringUtils.isNotBlank(serverSecret.getProxyPassword())) {
+                    properties.put(PROXY_PASSWORD_PROPERTY, serverSecret.getProxyPassword());
+                }
+            }
+            
             if (StringUtils.isNotBlank(overrideBaseURL)) {
                 properties.put(API_ROOT_URL_PROPERTY, overrideBaseURL + configuration.getApiPathUri());
                 properties.put(OAUTH2_TOKEN_URL_PROPERTY, overrideBaseURL + configuration.getTokenPathUri());
