@@ -32,46 +32,6 @@ import jenkins.model.Jenkins;
 public class ServerSecret extends AbstractDescribableImpl<ServerSecret> {
     private final int id;
     private final List<Mapping> mappings;
-    private String proxyHost;
-    private int proxyPort;
-    private String proxyUsername;
-    private String proxyPassword;
-    
-    public String getProxyHost() {
-        return proxyHost;
-    }
-
-    @DataBoundSetter
-    public void setProxyHost(final String proxyHost) {
-        this.proxyHost = proxyHost;
-    }
-
-    public int getProxyPort() {
-        return proxyPort;
-    }
-
-    @DataBoundSetter
-    public void setProxyPort(final int proxyPort) {
-        this.proxyPort = proxyPort;
-    }
-
-    public String getProxyUsername() {
-        return proxyUsername;
-    }
-
-    @DataBoundSetter
-    public void setProxyUsername(final String proxyUsername) {
-        this.proxyUsername = proxyUsername;
-    }
-
-    public String getProxyPassword() {
-        return proxyPassword;
-    }
-
-    @DataBoundSetter
-    public void setProxyPassword(final String proxyPassword) {
-        this.proxyPassword = proxyPassword;
-    }
 
     public int getId() {
         return id;

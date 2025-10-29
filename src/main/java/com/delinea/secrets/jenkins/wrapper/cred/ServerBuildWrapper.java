@@ -13,9 +13,9 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
 
-import com.delinea.secrets.server.spring.Secret;
-import com.delinea.secrets.server.spring.SecretServer;
-import com.delinea.secrets.server.spring.SecretServerFactoryBean;
+import com.delinea.server.spring.Secret;
+import com.delinea.server.spring.SecretServer;
+import com.delinea.server.spring.SecretServerFactoryBean;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -27,19 +27,17 @@ import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class ServerBuildWrapper extends SimpleBuildWrapper {
-    private static final String USERNAME_PROPERTY = "secret_server.oauth2.username";
-    private static final String PASSWORD_PROPERTY = "secret_server.oauth2.password";
-    private static final String API_ROOT_URL_PROPERTY = "secret_server.api_root_url";
-    private static final String OAUTH2_TOKEN_URL_PROPERTY = "secret_server.oauth2.token_url";
-    
- // Proxy property names for SecretServerFactoryBean
-    private static final String PROXY_HOST_PROPERTY = "secret_server.proxy.host";
-    private static final String PROXY_PORT_PROPERTY = "secret_server.proxy.port";
-    private static final String PROXY_USERNAME_PROPERTY = "secret_server.proxy.username";
-    private static final String PROXY_PASSWORD_PROPERTY = "secret_server.proxy.password";
+    private static final String USERNAME_PROPERTY = "server.username";
+    private static final String PASSWORD_PROPERTY = "server.password";
+    private static final String SERVER_URL = "server.url";
+    private static final String PROXY_HOST_PROPERTY = "proxy.host";
+    private static final String PROXY_PORT_PROPERTY = "proxy.port";
+    private static final String PROXY_USERNAME_PROPERTY = "proxy.username";
+    private static final String PROXY_PASSWORD_PROPERTY = "proxy.password";
 
     private List<ServerSecret> secrets;
     private List<String> valuesToMask = new ArrayList<>();
@@ -62,7 +60,6 @@ public class ServerBuildWrapper extends SimpleBuildWrapper {
     public ConsoleLogFilter createLoggerDecorator(final Run<?, ?> build) {
     	return new ServerConsoleLogFilter(build.getCharset().name(), valuesToMask);
     }
-
     
     @Override
     public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher,
@@ -70,36 +67,57 @@ public class ServerBuildWrapper extends SimpleBuildWrapper {
         final ServerConfiguration configuration = ExtensionList.lookupSingleton(ServerConfiguration.class);
         final Map<String, Object> properties = new HashMap<>();
 
-        // these may be overridden by the secret below
-        properties.put(API_ROOT_URL_PROPERTY, configuration.getAPIUrl());
-        properties.put(OAUTH2_TOKEN_URL_PROPERTY, configuration.getTokenUrl());
-        secrets.forEach(serverSecret -> {
-        	 // Print proxy details coming from Jelly form inputs
-            listener.getLogger().println("[ServerBuildWrapper] ---------- Proxy Details (from ServerSecret) ----------");
-            listener.getLogger().println("    Proxy Host     : " + StringUtils.defaultString(serverSecret.getProxyHost(), "(none)"));
-            listener.getLogger().println("    Proxy Port     : " + (serverSecret.getProxyPort() != 0 ? serverSecret.getProxyPort() : "(none)"));
-            listener.getLogger().println("    Proxy Username : " + StringUtils.defaultString(serverSecret.getProxyUsername(), "(none)"));
-            listener.getLogger().println("    Proxy Password : " + (StringUtils.isNotBlank(serverSecret.getProxyPassword()) ? "********" : "(none)"));
-            listener.getLogger().println("----------------------------------------------------------");
-            final String overrideBaseURL = serverSecret.getBaseUrl();
-            final String overrideUserCredentialId = serverSecret.getCredentialId();
+        properties.put(SERVER_URL, configuration.getBaseUrl());
+      
+        String proxyHost = configuration.getProxyHost();
+        int proxyPort = configuration.getProxyPort();
+        String proxyUsername = configuration.getProxyUsername();
+        String proxyPassword = configuration.getProxyPassword();
 
-         // Add proxy settings to properties if configured
-            if (StringUtils.isNotBlank(serverSecret.getProxyHost()) && serverSecret.getProxyPort() > 0) {
-                properties.put(PROXY_HOST_PROPERTY, serverSecret.getProxyHost());
-                properties.put(PROXY_PORT_PROPERTY, serverSecret.getProxyPort());
-
-                if (StringUtils.isNotBlank(serverSecret.getProxyUsername())) {
-                    properties.put(PROXY_USERNAME_PROPERTY, serverSecret.getProxyUsername());
-                }
-                if (StringUtils.isNotBlank(serverSecret.getProxyPassword())) {
-                    properties.put(PROXY_PASSWORD_PROPERTY, serverSecret.getProxyPassword());
-                }
+        // Fallback to Jenkins global proxy if Delinea proxy not set
+        if (StringUtils.isBlank(proxyHost) || proxyPort <= 0) {
+            hudson.ProxyConfiguration jenkinsProxy = Jenkins.get().proxy;
+            if (jenkinsProxy != null && StringUtils.isNotBlank(jenkinsProxy.name)) {
+                listener.getLogger().println("[ServerBuildWrapper] No Delinea proxy configured — using Jenkins global proxy.");
+                proxyHost = jenkinsProxy.name;
+                proxyPort = jenkinsProxy.port;
+                proxyUsername = jenkinsProxy.getUserName();
+                proxyPassword = jenkinsProxy.getPassword();
+            } else {
+                listener.getLogger().println("[ServerBuildWrapper] No proxy configuration found (Delinea or Jenkins). Connecting directly.");
             }
-            
+        } else {
+            listener.getLogger().println("[ServerBuildWrapper] Using Delinea-specific proxy configuration.");
+        }
+        
+        listener.getLogger().println("[ServerBuildWrapper] ---------- Proxy Configuration Summary ----------");
+        listener.getLogger().println(String.format("    Source         : %s",
+                StringUtils.isNotBlank(configuration.getProxyHost()) ? "Delinea Plugin Proxy" : "Jenkins Global Proxy "));
+        listener.getLogger().println("    Proxy Host     : " + StringUtils.defaultString(proxyHost, "(none)"));
+        listener.getLogger().println("    Proxy Port     : " + (proxyPort > 0 ? proxyPort : "(none)"));
+        listener.getLogger().println("    Proxy Username : " + (StringUtils.isNotBlank(proxyUsername) ? "*****": "(none)"));
+        listener.getLogger().println("    Proxy Password : " + (StringUtils.isNotBlank(proxyPassword) ? "********" : "(none)"));
+        listener.getLogger().println("---------------------------------------------------------------------");
+
+        // Add proxy settings to properties if configured
+        if (StringUtils.isNotBlank(proxyHost) && proxyPort > 0) {
+            properties.put(PROXY_HOST_PROPERTY, proxyHost);
+            properties.put(PROXY_PORT_PROPERTY, proxyPort);
+
+            if (StringUtils.isNotBlank(proxyUsername)) {
+                properties.put(PROXY_USERNAME_PROPERTY, proxyUsername);
+            }
+            if (StringUtils.isNotBlank(proxyPassword)) {
+                properties.put(PROXY_PASSWORD_PROPERTY, proxyPassword);
+            }
+        }
+        
+        secrets.forEach(serverSecret -> {
+        	final String overrideBaseURL = serverSecret.getBaseUrl();
+            final String overrideUserCredentialId = serverSecret.getCredentialId();
+         
             if (StringUtils.isNotBlank(overrideBaseURL)) {
-                properties.put(API_ROOT_URL_PROPERTY, overrideBaseURL + configuration.getApiPathUri());
-                properties.put(OAUTH2_TOKEN_URL_PROPERTY, overrideBaseURL + configuration.getTokenPathUri());
+                properties.put(SERVER_URL, overrideBaseURL);
             }
 
             final UserCredentials credential;

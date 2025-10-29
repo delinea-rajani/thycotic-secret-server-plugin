@@ -27,9 +27,8 @@ import jenkins.model.Jenkins;
 @Extension
 @Symbol("secretServer")
 public class ServerConfiguration extends GlobalConfiguration {
-    public static final String DEFAULT_API_PATH_URI = "/api/v1";
-    public static final String DEFAULT_TOKEN_PATH_URI = "/oauth2/token";
     public static final String DEFAULT_ENVIRONMENT_VARIABLE_PREFIX = "TSS_";
+    public static final String API_VERSION = "v1";
 
     /**
      * Calls hudson.ExtensionList#lookupSingleton(ServerConfiguration.class)
@@ -58,26 +57,51 @@ public class ServerConfiguration extends GlobalConfiguration {
         }
     }
 
-    private String credentialId, baseUrl, apiPathUri = DEFAULT_API_PATH_URI, tknPathUri = DEFAULT_TOKEN_PATH_URI,
-            environmentVariablePrefix = DEFAULT_ENVIRONMENT_VARIABLE_PREFIX;
-
-    /**
-     * Convenience method for {@link ServerBuildWrapper}
-     *
-     * @return the composition of {@link #getBaseUrl()} and {@link #getApiPathUri()}
-     */
-    String getAPIUrl() {
-        return getBaseUrl() + getApiPathUri();
+    private String credentialId, baseUrl, environmentVariablePrefix = DEFAULT_ENVIRONMENT_VARIABLE_PREFIX;
+    private String proxyHost;
+    private int proxyPort;
+    private String proxyUsername;
+    private String proxyPassword;
+    private String apiVersion = API_VERSION;
+    
+    public String getProxyHost() {
+        return proxyHost;
     }
 
-    /**
-     * Convenience method for {@link ServerBuildWrapper}
-     *
-     * @return the composition of {@link #getBaseUrl()} and
-     *         {@link #getTokenPathUri()}
-     */
-    String getTokenUrl() {
-        return getBaseUrl() + getTokenPathUri();
+    @DataBoundSetter
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+        save();
+    }
+
+    public int getProxyPort() {
+        return proxyPort;
+    }
+
+    @DataBoundSetter
+    public void setProxyPort(int proxyPort) {
+        this.proxyPort = proxyPort;
+        save();
+    }
+
+    public String getProxyUsername() {
+        return proxyUsername;
+    }
+
+    @DataBoundSetter
+    public void setProxyUsername(String proxyUsername) {
+        this.proxyUsername = proxyUsername;
+        save();
+    }
+
+    public String getProxyPassword() {
+        return proxyPassword;
+    }
+
+    @DataBoundSetter
+    public void setProxyPassword(String proxyPassword) {
+        this.proxyPassword = proxyPassword;
+        save();
     }
 
     public ServerConfiguration() {
@@ -131,23 +155,13 @@ public class ServerConfiguration extends GlobalConfiguration {
         save();
     }
 
-    public String getApiPathUri() {
-        return apiPathUri;
+    public String getApiVersion() {
+        return apiVersion;
     }
 
     @DataBoundSetter
-    public void setApiPathUri(final String apiPathUri) {
-        this.apiPathUri = "/" + StringUtils.strip(apiPathUri, "/");
-        save();
-    }
-
-    public String getTokenPathUri() {
-        return tknPathUri;
-    }
-
-    @DataBoundSetter
-    public void setTokenPathUri(final String tokenPathUri) {
-        this.tknPathUri = StringUtils.strip(tokenPathUri);
+    public void setApiVersion(final String apiVersion) {
+        this.apiVersion = apiVersion;
         save();
     }
 }
