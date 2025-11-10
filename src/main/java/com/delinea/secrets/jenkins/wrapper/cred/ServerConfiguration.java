@@ -21,6 +21,7 @@ import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 
@@ -61,7 +62,7 @@ public class ServerConfiguration extends GlobalConfiguration {
 	private String proxyHost;
 	private int proxyPort;
 	private String proxyUsername;
-	private String proxyPassword;
+	private Secret proxyPassword;
 	private String apiVersion = API_VERSION;
 	private String noProxyHosts;
 
@@ -95,12 +96,12 @@ public class ServerConfiguration extends GlobalConfiguration {
 		save();
 	}
 
-	public String getProxyPassword() {
-		return proxyPassword;
+	public Secret getProxyPassword() {
+	    return proxyPassword;
 	}
 
 	@DataBoundSetter
-	public void setProxyPassword(String proxyPassword) {
+	public void setProxyPassword(Secret proxyPassword) {
 		this.proxyPassword = proxyPassword;
 		save();
 	}

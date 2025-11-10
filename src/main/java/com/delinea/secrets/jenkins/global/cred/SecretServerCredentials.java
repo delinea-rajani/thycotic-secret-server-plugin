@@ -43,7 +43,7 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 	private final String proxyHost;
 	private final String proxyPort;
 	private final String proxyUsername;
-	private final String proxyPassword;
+	private final Secret proxyPassword;
 	private final String noProxyHosts;
 
 	/**
@@ -59,7 +59,7 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 	 */
 	@DataBoundConstructor
 	public SecretServerCredentials(final CredentialsScope scope, final String id, final String description, String vaultUrl,
-			String credentialId, String secretId, String usernameSlug, String passwordSlugName, String proxyHost, String proxyPort, String proxyUsername, String proxyPassword, String noProxyHosts) throws FormException {
+			String credentialId, String secretId, String usernameSlug, String passwordSlugName, String proxyHost, String proxyPort, String proxyUsername, Secret proxyPassword, String noProxyHosts) throws FormException {
 		super(scope, id, description, null, null);
 		this.usernameSlug = usernameSlug;
 		this.passwordSlugName = passwordSlugName;
@@ -86,8 +86,8 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 		return proxyUsername;
 	}
 	
-	public String getProxyPassword() {
-		return proxyPassword;
+	public Secret getProxyPassword() {
+	    return proxyPassword;
 	}
 	
 	public String getNoProxyHosts() {
@@ -164,7 +164,7 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 							"UserCredentials with the specified credentialId not found in the folder context.");
 				}
 				vaultCredential = new VaultClient().fetchCredentials(vaultUrl, secretId, credential.getUsername(),
-						credential.getPassword().getPlainText(), usernameSlug, passwordSlugName, proxyHost, proxyPort, proxyUsername, proxyPassword,noProxyHosts);
+						credential.getPassword().getPlainText(), usernameSlug, passwordSlugName, proxyHost, proxyPort, proxyUsername, proxyPassword.getPlainText(),noProxyHosts);
 			} catch (Exception e) {
 				throw new RuntimeException("Failed to fetch credentials from vault. " + e.getMessage());
 			}
@@ -286,7 +286,7 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 				@QueryParameter("proxyHost") final String proxyHost,
 				@QueryParameter("proxyPort") final String proxyPort,
 				@QueryParameter("proxyUsername") final String proxyUsername,
-				@QueryParameter("proxyPassword") final String proxyPassword, 
+				@QueryParameter("proxyPassword") final Secret proxyPassword, 
 				@QueryParameter("noProxyHosts") final String noProxyHosts) {
 			if ((owner == null && !Jenkins.get().hasPermission(CredentialsProvider.CREATE))
 		            || (owner != null && !owner.hasPermission(CredentialsProvider.CREATE))) {
@@ -312,7 +312,7 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 			try {
 				UserCredentials credential = UserCredentials.get(credentialId, owner);
 				new VaultClient().fetchCredentials(vaultUrl, secretId, credential.getUsername(),
-						credential.getPassword().getPlainText(), usernameSlug,passwordSlugName,proxyHost,proxyPort,proxyUsername,proxyPassword,noProxyHosts);
+						credential.getPassword().getPlainText(), usernameSlug,passwordSlugName,proxyHost,proxyPort,proxyUsername,proxyPassword.getPlainText(),noProxyHosts);
 				return FormValidation.ok("Connection successful.");
 			}  catch (Exception e) {
 		        Throwable root = e;

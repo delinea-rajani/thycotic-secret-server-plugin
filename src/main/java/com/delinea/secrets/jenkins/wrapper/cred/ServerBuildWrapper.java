@@ -94,7 +94,7 @@ public class ServerBuildWrapper extends SimpleBuildWrapper {
                     configuration.getProxyHost(),
                     String.valueOf(configuration.getProxyPort()),
                     configuration.getProxyUsername(),
-                    configuration.getProxyPassword(),
+                    configuration.getProxyPassword().getPlainText(),
                     configuration.getNoProxyHosts());
 
             // Add all proxy property keys found
