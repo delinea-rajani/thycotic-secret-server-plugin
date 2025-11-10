@@ -27,141 +27,152 @@ import jenkins.model.Jenkins;
 @Extension
 @Symbol("secretServer")
 public class ServerConfiguration extends GlobalConfiguration {
-    public static final String DEFAULT_ENVIRONMENT_VARIABLE_PREFIX = "TSS_";
-    public static final String API_VERSION = "v1";
+	public static final String DEFAULT_ENVIRONMENT_VARIABLE_PREFIX = "TSS_";
+	public static final String API_VERSION = "v1";
 
-    /**
-     * Calls hudson.ExtensionList#lookupSingleton(ServerConfiguration.class)
-     * to get the singleton instance of this class which is how the Jenkins
-     * documentation recommends that it be accessed.
-     *
-     * @return the singleton instance of this class
-     */
-    public static ServerConfiguration get() {
-        return ExtensionList.lookupSingleton(ServerConfiguration.class);
-    }
+	/**
+	 * Calls hudson.ExtensionList#lookupSingleton(ServerConfiguration.class) to get
+	 * the singleton instance of this class which is how the Jenkins documentation
+	 * recommends that it be accessed.
+	 *
+	 * @return the singleton instance of this class
+	 */
+	public static ServerConfiguration get() {
+		return ExtensionList.lookupSingleton(ServerConfiguration.class);
+	}
 
-    /**
-     * Exposes the Base URL validation logic to {@link ServerSecret}
-     *
-     * @param value - the base URL to be validated
-     * @return {@link hudson.util.FormValidation#ok()} or
-     *         {@link hudson.util.FormValidation#error(String)}
-     */
-    static FormValidation checkBaseUrl(@QueryParameter final String value) {
-        try {
-            new URL(value);
-            return FormValidation.ok();
-        } catch (final MalformedURLException e) {
-            return FormValidation.error("Invalid URL");
-        }
-    }
+	/**
+	 * Exposes the Base URL validation logic to {@link ServerSecret}
+	 *
+	 * @param value - the base URL to be validated
+	 * @return {@link hudson.util.FormValidation#ok()} or
+	 *         {@link hudson.util.FormValidation#error(String)}
+	 */
+	static FormValidation checkBaseUrl(@QueryParameter final String value) {
+		try {
+			new URL(value);
+			return FormValidation.ok();
+		} catch (final MalformedURLException e) {
+			return FormValidation.error("Invalid URL");
+		}
+	}
 
-    private String credentialId, baseUrl, environmentVariablePrefix = DEFAULT_ENVIRONMENT_VARIABLE_PREFIX;
-    private String proxyHost;
-    private int proxyPort;
-    private String proxyUsername;
-    private String proxyPassword;
-    private String apiVersion = API_VERSION;
-    
-    public String getProxyHost() {
-        return proxyHost;
-    }
+	private String credentialId, baseUrl, environmentVariablePrefix = DEFAULT_ENVIRONMENT_VARIABLE_PREFIX;
+	private String proxyHost;
+	private int proxyPort;
+	private String proxyUsername;
+	private String proxyPassword;
+	private String apiVersion = API_VERSION;
+	private String noProxyHosts;
 
-    @DataBoundSetter
-    public void setProxyHost(String proxyHost) {
-        this.proxyHost = proxyHost;
-        save();
-    }
+	public String getProxyHost() {
+		return proxyHost;
+	}
 
-    public int getProxyPort() {
-        return proxyPort;
-    }
+	@DataBoundSetter
+	public void setProxyHost(String proxyHost) {
+		this.proxyHost = proxyHost;
+		save();
+	}
 
-    @DataBoundSetter
-    public void setProxyPort(int proxyPort) {
-        this.proxyPort = proxyPort;
-        save();
-    }
+	public int getProxyPort() {
+		return proxyPort;
+	}
 
-    public String getProxyUsername() {
-        return proxyUsername;
-    }
+	@DataBoundSetter
+	public void setProxyPort(int proxyPort) {
+		this.proxyPort = proxyPort;
+		save();
+	}
 
-    @DataBoundSetter
-    public void setProxyUsername(String proxyUsername) {
-        this.proxyUsername = proxyUsername;
-        save();
-    }
+	public String getProxyUsername() {
+		return proxyUsername;
+	}
 
-    public String getProxyPassword() {
-        return proxyPassword;
-    }
+	@DataBoundSetter
+	public void setProxyUsername(String proxyUsername) {
+		this.proxyUsername = proxyUsername;
+		save();
+	}
 
-    @DataBoundSetter
-    public void setProxyPassword(String proxyPassword) {
-        this.proxyPassword = proxyPassword;
-        save();
-    }
+	public String getProxyPassword() {
+		return proxyPassword;
+	}
 
-    public ServerConfiguration() {
-        load();
-    }
+	@DataBoundSetter
+	public void setProxyPassword(String proxyPassword) {
+		this.proxyPassword = proxyPassword;
+		save();
+	}
 
-    @POST
-    public FormValidation doCheckBaseUrl(@QueryParameter final String value) throws IOException, ServletException {
-        if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
-            return FormValidation.error("You do not have permission to perform this action");
-        }
-        return checkBaseUrl(value);
-    }
+	public String getNoProxyHosts() {
+		return noProxyHosts;
+	}
 
-    @POST
-    public ListBoxModel doFillCredentialIdItems(@AncestorInPath final Item item) {
-        if (item == null && !Jenkins.get().hasPermission(Jenkins.ADMINISTER) ||
-                item != null && !item.hasPermission(Item.CONFIGURE)) {
-            return new StandardListBoxModel();
-        }
-        return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, item, UserCredentials.class);
-    }
+	@DataBoundSetter
+	public void setNoProxyHosts(String noProxyHosts) {
+		this.noProxyHosts = noProxyHosts;
+		save();
+	}
 
-    public String getCredentialId() {
-        return credentialId;
-    }
+	public ServerConfiguration() {
+		load();
+	}
 
-    @DataBoundSetter
-    public void setCredentialId(final String credentialId) {
-        this.credentialId = credentialId;
-        save();
-    }
+	@POST
+	public FormValidation doCheckBaseUrl(@QueryParameter final String value) throws IOException, ServletException {
+		if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
+			return FormValidation.error("You do not have permission to perform this action");
+		}
+		return checkBaseUrl(value);
+	}
 
-    public String getBaseUrl() {
-        return baseUrl;
-    }
+	@POST
+	public ListBoxModel doFillCredentialIdItems(@AncestorInPath final Item item) {
+		if (item == null && !Jenkins.get().hasPermission(Jenkins.ADMINISTER)
+				|| item != null && !item.hasPermission(Item.CONFIGURE)) {
+			return new StandardListBoxModel();
+		}
+		return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, item, UserCredentials.class);
+	}
 
-    @DataBoundSetter
-    public void setBaseUrl(final String baseUrl) {
-        this.baseUrl = StringUtils.removeEnd(baseUrl, "/");
-        save();
-    }
+	public String getCredentialId() {
+		return credentialId;
+	}
 
-    public String getEnvironmentVariablePrefix() {
-        return environmentVariablePrefix;
-    }
+	@DataBoundSetter
+	public void setCredentialId(final String credentialId) {
+		this.credentialId = credentialId;
+		save();
+	}
 
-    @DataBoundSetter
-    public void setEnvironmentVariablePrefix(final String environmentVariablePrefix) {
-        this.environmentVariablePrefix = environmentVariablePrefix;
-        save();
-    }
+	public String getBaseUrl() {
+		return baseUrl;
+	}
 
-    public String getApiVersion() {
-        return apiVersion;
-    }
+	@DataBoundSetter
+	public void setBaseUrl(final String baseUrl) {
+		this.baseUrl = StringUtils.removeEnd(baseUrl, "/");
+		save();
+	}
 
-    @DataBoundSetter
-    public void setApiVersion(final String apiVersion) {
-        this.apiVersion = apiVersion;
-        save();
-    }
+	public String getEnvironmentVariablePrefix() {
+		return environmentVariablePrefix;
+	}
+
+	@DataBoundSetter
+	public void setEnvironmentVariablePrefix(final String environmentVariablePrefix) {
+		this.environmentVariablePrefix = environmentVariablePrefix;
+		save();
+	}
+
+	public String getApiVersion() {
+		return apiVersion;
+	}
+
+	@DataBoundSetter
+	public void setApiVersion(final String apiVersion) {
+		this.apiVersion = apiVersion;
+		save();
+	}
 }
