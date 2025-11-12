@@ -10,8 +10,6 @@ import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-
-import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.verb.POST;
 
@@ -45,6 +43,7 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 	private final String proxyUsername;
 	private final Secret proxyPassword;
 	private final String noProxyHosts;
+	private final boolean useProxy;
 
 	/**
 	 * Constructor to initialize the SecretServerCredentials object.
@@ -59,7 +58,7 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 	 */
 	@DataBoundConstructor
 	public SecretServerCredentials(final CredentialsScope scope, final String id, final String description, String vaultUrl,
-			String credentialId, String secretId, String usernameSlug, String passwordSlugName, String proxyHost, String proxyPort, String proxyUsername, Secret proxyPassword, String noProxyHosts) throws FormException {
+			String credentialId, String secretId, String usernameSlug, String passwordSlugName, String proxyHost, String proxyPort, String proxyUsername, Secret proxyPassword, String noProxyHosts, boolean useProxy) throws FormException {
 		super(scope, id, description, null, null);
 		this.usernameSlug = usernameSlug;
 		this.passwordSlugName = passwordSlugName;
@@ -72,8 +71,13 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 		this.proxyUsername = proxyUsername;
 		this.proxyPassword = proxyPassword;
 		this.noProxyHosts = noProxyHosts;
+		this.useProxy = useProxy;
 	}
 
+	public boolean isUseProxy() {
+		return useProxy;
+	}
+	
 	public String getProxyHost() {
 		return proxyHost;
 	}
@@ -163,8 +167,14 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 					throw new RuntimeException(
 							"UserCredentials with the specified credentialId not found in the folder context.");
 				}
+				String ph = useProxy ? proxyHost : null;
+				String pp = useProxy ? proxyPort : null;
+				String pu = useProxy ? proxyUsername : null;
+				String pw = (useProxy && proxyPassword != null) ? proxyPassword.getPlainText() : null;
+				String nph = useProxy ? noProxyHosts : null;
+	                
 				vaultCredential = new VaultClient().fetchCredentials(vaultUrl, secretId, credential.getUsername(),
-						credential.getPassword().getPlainText(), usernameSlug, passwordSlugName, proxyHost, proxyPort, proxyUsername, proxyPassword.getPlainText(),noProxyHosts);
+						credential.getPassword().getPlainText(), usernameSlug, passwordSlugName,  ph, pp, pu, pw, nph);
 			} catch (Exception e) {
 				throw new RuntimeException("Failed to fetch credentials from vault. " + e.getMessage());
 			}
@@ -177,7 +187,7 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 
 		@Override
 		public String getDisplayName() {
-			return "Secret Server Vault Credentials";
+			return "Secret Server or Platform Vault Credentials";
 		}
 
 		/**
@@ -287,7 +297,8 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 				@QueryParameter("proxyPort") final String proxyPort,
 				@QueryParameter("proxyUsername") final String proxyUsername,
 				@QueryParameter("proxyPassword") final Secret proxyPassword, 
-				@QueryParameter("noProxyHosts") final String noProxyHosts) {
+				@QueryParameter("noProxyHosts") final String noProxyHosts,
+				@QueryParameter("useProxy") final boolean useProxy) {
 			if ((owner == null && !Jenkins.get().hasPermission(CredentialsProvider.CREATE))
 		            || (owner != null && !owner.hasPermission(CredentialsProvider.CREATE))) {
 		        return FormValidation.error("You do not have permission to perform this action.");
@@ -311,8 +322,14 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 			
 			try {
 				UserCredentials credential = UserCredentials.get(credentialId, owner);
+				String ph = useProxy ? proxyHost : null;
+				String pp = useProxy ? proxyPort : null;
+				String pu = useProxy ? proxyUsername : null;
+				String pw = (useProxy && proxyPassword != null) ? proxyPassword.getPlainText() : null;
+				String nph = useProxy ? noProxyHosts : null;
+	                
 				new VaultClient().fetchCredentials(vaultUrl, secretId, credential.getUsername(),
-						credential.getPassword().getPlainText(), usernameSlug,passwordSlugName,proxyHost,proxyPort,proxyUsername,proxyPassword.getPlainText(),noProxyHosts);
+						credential.getPassword().getPlainText(), usernameSlug,passwordSlugName, ph, pp, pu, pw, nph);
 				return FormValidation.ok("Connection successful.");
 			}  catch (Exception e) {
 		        Throwable root = e;

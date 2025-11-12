@@ -90,12 +90,15 @@ public class ServerBuildWrapper extends SimpleBuildWrapper {
 
             // Resolve proxy config (host/port/username/password) using shared utility
             Map<String, String> proxyConfig = DelineaProxyUtil.resolveProxy(
-                    effectiveUrl,
-                    configuration.getProxyHost(),
-                    String.valueOf(configuration.getProxyPort()),
-                    configuration.getProxyUsername(),
-                    configuration.getProxyPassword().getPlainText(),
-                    configuration.getNoProxyHosts());
+                 effectiveUrl,
+                 configuration.isUseProxy() ? configuration.getProxyHost() : "",
+                 configuration.isUseProxy() ? String.valueOf(configuration.getProxyPort()) : "",
+                 configuration.isUseProxy() ? configuration.getProxyUsername() : "",
+                 configuration.isUseProxy() && configuration.getProxyPassword() != null
+                         ? configuration.getProxyPassword().getPlainText()
+                         : "",
+                 configuration.isUseProxy() ? configuration.getNoProxyHosts() : ""
+         );
 
             // Add all proxy property keys found
             for (Map.Entry<String, String> entry : proxyConfig.entrySet()) {
@@ -197,7 +200,7 @@ public class ServerBuildWrapper extends SimpleBuildWrapper {
         }
         @Override
         public String getDisplayName() {
-            return "Use Delinea Secret Server Secrets";
+            return "Use Delinea Secret Server or Platform Secrets";
         }
     }
 }

@@ -65,6 +65,17 @@ public class ServerConfiguration extends GlobalConfiguration {
 	private Secret proxyPassword;
 	private String apiVersion = API_VERSION;
 	private String noProxyHosts;
+	private boolean useProxy;
+
+	public boolean isUseProxy() {
+	    return useProxy;
+	}
+
+	@DataBoundSetter
+	public void setUseProxy(boolean useProxy) {
+	    this.useProxy = useProxy;
+	    save();
+	}
 
 	public String getProxyHost() {
 		return proxyHost;
