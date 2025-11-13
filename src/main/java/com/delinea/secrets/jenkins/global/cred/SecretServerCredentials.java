@@ -187,7 +187,7 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 
 		@Override
 		public String getDisplayName() {
-			return "Secret Server or Platform Vault Credentials";
+			return "Delinea Secret Server or Platform Vault Credentials";
 		}
 
 		/**
