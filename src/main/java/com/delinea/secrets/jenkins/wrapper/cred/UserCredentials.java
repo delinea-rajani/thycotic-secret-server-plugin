@@ -63,7 +63,7 @@ public class UserCredentials extends UsernamePasswordCredentialsImpl implements 
 
         @Override
         public String getDisplayName() {
-            return "Secret Server Application or Platform Service Account Credentials";
+            return "Delinea Secret Server Application or Platform Service Account Credentials";
         }
     }
 }
