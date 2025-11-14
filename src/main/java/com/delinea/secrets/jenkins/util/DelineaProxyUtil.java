@@ -125,18 +125,22 @@ public class DelineaProxyUtil {
 	}
 
 	private static Map<String, String> logAndReturn(String source, String host, String port, String user, String pass) {
-		LOGGER.info(String.format("""
-				[DelineaProxyUtil] ---------- Proxy Configuration ----------
-				    Source         : %s
-				    Proxy Host     : %s
-				    Proxy Port     : %s
-				    Proxy Username : %s
-				    Proxy Password : %s
-				-------------------------------------------------------------
-				""", source, StringUtils.defaultString(host, "(none)"), StringUtils.defaultString(port, "(none)"),
-				StringUtils.isNotBlank(user) ? "*****" : "(none)",
-				StringUtils.isNotBlank(pass) ? "********" : "(none)"));
+		 String message = String.format(
+		            "[DelineaProxyUtil] ---------- Proxy Configuration ----------%n" +
+		            "    Source         : %s%n" +
+		            "    Proxy Host     : %s%n" +
+		            "    Proxy Port     : %s%n" +
+		            "    Proxy Username : %s%n" +
+		            "    Proxy Password : %s%n" +
+		            "-------------------------------------------------------------%n",
+		            source,
+		            StringUtils.defaultString(host, "(none)"),
+		            StringUtils.defaultString(port, "(none)"),
+		            StringUtils.isNotBlank(user) ? "*****" : "(none)",
+		            StringUtils.isNotBlank(pass) ? "********" : "(none)"
+		    );
 
+		    LOGGER.info(message);
 		Map<String, String> proxyConfig = new HashMap<>();
 		if (StringUtils.isNotBlank(host))
 			proxyConfig.put(PROXY_HOST_PROPERTY, host);
