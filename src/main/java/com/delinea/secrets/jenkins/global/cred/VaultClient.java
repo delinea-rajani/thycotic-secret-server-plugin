@@ -3,78 +3,95 @@ package com.delinea.secrets.jenkins.global.cred;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
 
-import com.thycotic.secrets.server.spring.Secret;
-import com.thycotic.secrets.server.spring.SecretServer;
-import com.thycotic.secrets.server.spring.SecretServerFactoryBean;
-
+import com.delinea.platform.service.AuthenticationService;
+import com.delinea.secrets.jenkins.util.DelineaProxyUtil;
+import com.delinea.server.spring.Secret;
+import com.delinea.server.spring.SecretServer;
+import com.delinea.server.spring.SecretServerFactoryBean;
 
 public class VaultClient {
-	private static final String USERNAME_PROPERTY = "secret_server.oauth2.username";
-	private static final String PASSWORD_PROPERTY = "secret_server.oauth2.password";
-	private static final String API_ROOT_URL_PROPERTY = "secret_server.api_root_url";
-	private static final String OAUTH2_TOKEN_URL_PROPERTY = "secret_server.oauth2.token_url";
+	private static final Logger LOGGER = Logger.getLogger(VaultClient.class.getName());
+
+	private static final String USERNAME_PROPERTY = "server.username";
+	private static final String PASSWORD_PROPERTY = "server.password";
+	private static final String SERVER_URL_PROPERTY = "server.url";
 
 	public VaultClient() {
 	}
 
-	/**
-	 * Fetches credentials from the Secret Server using the provided Vault URL,
-	 * secret ID, username, and password.
-	 *
-	 * @param vaultUrl The base URL of the Secret server.
-	 * @param secretId The ID of the secret to fetch.
-	 * @param username The username for authenticating with the Vault.
-	 * @param password The password for authenticating with the Vault.
-	 * @param usernameSlug 
-	 * @param passwordSlugName 
-	 * @return A UsernamePassword object containing the fetched credentials, or null
-	 *         if not found.
-	 * @throws Exception if there is an error during the fetching process.
-	 */
-	public UsernamePassword fetchCredentials(String vaultUrl, String secretId, String username, String password, String usernameSlug, String passwordSlugName)
-			throws Exception {
-		// Create a map to hold properties for the Secret Server connection
+	public UsernamePassword fetchCredentials(String vaultUrl, String secretId, String username, String password,
+			String usernameSlug, String passwordSlugName, String proxyHost, String proxyPort, String proxyUsername,
+			String proxyPassword, String noProxyHosts) throws Exception {
+
 		Map<String, Object> properties = new HashMap<>();
+		String trimmedUrl = StringUtils.removeEnd(vaultUrl, "/");
 
-		// Remove trailing slash from the Vault URL if present
-		String ssurl = StringUtils.removeEnd(vaultUrl, "/");
-		if (StringUtils.isNotBlank(ssurl)) {
-			properties.put(API_ROOT_URL_PROPERTY, ssurl + "/api/v1");
-			properties.put(OAUTH2_TOKEN_URL_PROPERTY, ssurl + "/oauth2/token");
+		if (StringUtils.isNotBlank(trimmedUrl)) {
+			properties.put(SERVER_URL_PROPERTY, trimmedUrl);
 		}
-
 		properties.put(USERNAME_PROPERTY, username);
 		properties.put(PASSWORD_PROPERTY, password);
 
-		// Create and configure the application context with the Secret Server
-		try (AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext()) {
-			applicationContext.getEnvironment().getPropertySources()
-					.addLast(new MapPropertySource("properties", properties));
-			applicationContext.registerBean(SecretServerFactoryBean.class);
-			applicationContext.refresh();
+		Map<String, String> proxyConfig = DelineaProxyUtil.resolveProxy(trimmedUrl, proxyHost, proxyPort, proxyUsername,
+				proxyPassword, noProxyHosts);
 
-			// Fetch the secret using the provided secret ID
-			Secret secret = applicationContext.getBean(SecretServer.class).getSecret(Integer.parseInt(secretId));
-			// Extract the username and password fields from the secret
-			Optional<String> fetchUsername = secret.getFields().stream()
-					.filter(field -> usernameSlug.equalsIgnoreCase(field.getFieldName())|| usernameSlug.equalsIgnoreCase(field.getSlug())).map(Secret.Field::getValue)
-					.findFirst();
+		proxyConfig.forEach(properties::put);
 
-			Optional<String> fetchPassword = secret.getFields().stream()
-					.filter(field -> passwordSlugName.equalsIgnoreCase(field.getFieldName()) || passwordSlugName.equalsIgnoreCase(field.getSlug())).map(Secret.Field::getValue)
-					.findFirst();
-			
-			// Return the fetched credentials if both username and password are present
-			if (fetchUsername.isPresent() && fetchPassword.isPresent()) {
-				UsernamePassword usernamePassword = new UsernamePassword(fetchUsername.get(), fetchPassword.get());
-				return usernamePassword;
-			} else {
+		try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+			context.getEnvironment().getPropertySources().addLast(new MapPropertySource("properties", properties));
+			context.registerBean(SecretServerFactoryBean.class);
+			context.register(AuthenticationService.class);
+			try {
+				context.refresh();
+				SecretServer secretServer = context.getBean(SecretServer.class);
+
+				Secret secret = secretServer.getSecret(Integer.parseInt(secretId));
+				Optional<String> fetchedUser = secret.getFields().stream()
+						.filter(f -> usernameSlug.equalsIgnoreCase(f.getFieldName())
+								|| usernameSlug.equalsIgnoreCase(f.getSlug()))
+						.map(Secret.Field::getValue).findFirst();
+
+				Optional<String> fetchedPass = secret.getFields().stream()
+						.filter(f -> passwordSlugName.equalsIgnoreCase(f.getFieldName())
+								|| passwordSlugName.equalsIgnoreCase(f.getSlug()))
+						.map(Secret.Field::getValue).findFirst();
+
+				if (fetchedUser.isPresent() && fetchedPass.isPresent()) {
+					return new UsernamePassword(fetchedUser.get(), fetchedPass.get());
+				}
+				LOGGER.warning("[VaultClient] Secret retrieved but missing expected username/password fields.");
 				return null;
+
+			}  catch (Exception e) {
+			    Throwable root = e;
+			    while (root.getCause() != null) {
+			        root = root.getCause();
+			    }
+
+			    if (root instanceof java.net.UnknownHostException) {
+			        LOGGER.severe("[VaultClient] Host not found: " + root.getMessage());
+			    } else if (root instanceof org.springframework.web.client.HttpClientErrorException) {
+			        int status = ((org.springframework.web.client.HttpClientErrorException) root).getStatusCode().value();
+			        if (status == 407) {
+			            LOGGER.warning("[VaultClient] Proxy authentication failed (HTTP 407).");
+			        } else if (status == 400) {
+			            LOGGER.warning("[VaultClient] Access denied / invalid client credentials (HTTP 400).");
+			        } else {
+			            LOGGER.warning("[VaultClient] HTTP error (status " + status + ").");
+			        }
+			    } else if (root instanceof java.io.IOException) {
+			        LOGGER.severe("[VaultClient] Network I/O error: " + root.getMessage());
+			    } else {
+			        LOGGER.log(Level.SEVERE, "[VaultClient] Unexpected error: " + e.getMessage(), e);
+			    }
+			    throw e;
 			}
 		}
 	}
@@ -88,13 +105,12 @@ public class VaultClient {
 			this.password = hudson.util.Secret.fromString(password);
 		}
 
-		public String getPassword() {
-			return password.getPlainText();
-		}
-		
 		public String getUsername() {
 			return username;
 		}
-	}
 
+		public String getPassword() {
+			return password.getPlainText();
+		}
+	}
 }

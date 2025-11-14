@@ -1,164 +1,213 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>plugin</artifactId>
-        <version>4.16</version>
-        <relativePath />
-    </parent>
-    <groupId>io.jenkins.plugins</groupId>
-    <artifactId>thycotic-secret-server</artifactId>
-    <version>2.0</version>
-    <packaging>hpi</packaging>
-    <properties>
-        <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
-        <jenkins.version>2.235.5</jenkins.version>
-        <java.level>8</java.level>
-        <!-- Other properties you may want to use:
-          ~ jenkins-test-harness.version: Jenkins Test Harness version you use to test the plugin. For Jenkins version >= 1.580.1 use JTH 2.0 or higher.
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.jenkins-ci.plugins</groupId>
+		<artifactId>plugin</artifactId>
+		<version>5.7</version>
+		<relativePath />
+	</parent>
+	<groupId>io.jenkins.plugins</groupId>
+	<artifactId>thycotic-secret-server</artifactId>
+	<version>2.1.0</version>
+	<packaging>hpi</packaging>
+	<properties>
+		<!-- Baseline Jenkins version you use to build the plugin. Users must
+		have this version or newer to run. -->
+		<jenkins.baseline>2.479</jenkins.baseline>
+		<jenkins.version>${jenkins.baseline}.1</jenkins.version>
+		<java.level>17</java.level>
+		<!-- Other properties you may want to use:
+          ~ jenkins-test-harness.version: Jenkins Test Harness version you use to test
+		the plugin. For Jenkins version >= 1.580.1 use JTH 2.0 or higher.
           ~ hpi-plugin.version: The HPI Maven Plugin version used by the plugin..
-          ~ stapler-plugin.version: The Stapler Maven plugin version required by the plugin. -->
-        <spring.version>6.0.15</spring.version>
-    </properties>
-    <name>Delinea Secret Server Plugin</name>
-    <!-- The default licence for Jenkins OSS Plugins is MIT. Substitute for the applicable one if needed. -->
-    <licenses>
-        <license>
-            <name>Apache License, Version 2.0</name>
-            <url>https://opensource.org/licenses/Apache-2.0</url>
-        </license>
-    </licenses>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.235.x</artifactId>
-                <version>887.vae9c8ac09ff7</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>credentials</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci</groupId>
-            <artifactId>symbol-annotation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.9</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-beans</artifactId>
-            <version>5.3.24</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>5.3.24</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <version>5.3.24</version>
-        </dependency>
-        <dependency>
-            <groupId>com.thycotic.secrets</groupId>
-            <artifactId>tss-sdk-java</artifactId>
-            <version>1.0.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>jul-to-slf4j</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-to-slf4j</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>ch.qos.logback</groupId>
-                    <artifactId>logback-classic</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>ch.qos.logback</groupId>
-                    <artifactId>logback-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>jcl-over-slf4j</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>jul-to-slf4j</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>log4j-over-slf4j</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-jdk14</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>credentials-binding</artifactId>
-            <version>1.27.1</version>
-        </dependency>
-    </dependencies>
+          ~ stapler-plugin.version: The Stapler Maven plugin version required by the
+		plugin. -->
+	</properties>
+	<name>Delinea Secret Server_Platform Plugin</name>
+	<!-- The default licence for Jenkins OSS Plugins is MIT. Substitute for the
+	applicable one if needed. -->
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://opensource.org/licenses/Apache-2.0</url>
+		</license>
+	</licenses>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>io.jenkins.tools.bom</groupId>
+				<artifactId>bom-${jenkins.baseline}.x</artifactId>
+				<version>3944.v1a_e4f8b_452db_</version>
+				<scope>import</scope>
+				<type>pom</type>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<dependencies>
+	<dependency>
+			<groupId>org.apache.httpcomponents.client5</groupId>
+			<artifactId>httpclient5</artifactId>
+			<version>5.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents.core5</groupId>
+			<artifactId>httpcore5</artifactId>
+			<version>5.3.6</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.spotbugs</groupId>
+			<artifactId>spotbugs-annotations</artifactId>
+			<version>4.9.3</version>
+		</dependency>
+    <dependency>
+			<groupId>com.delinea.secrets</groupId>
+			<artifactId>tss-sdk-java</artifactId>
+			<version>2.1.0</version>
+        <exclusions>
+				<!-- Exclude Spring Boot / Spring to avoid conflicts -->
+            <exclusion>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
 
-    <developers>
-        <developer>
-            <id>amigus</id>
-            <name>Adam Migus</name>
-            <email>adam@migus.org</email>
-        </developer>
-    </developers>
+		<!-- Jenkins / common dependencies -->
+    <dependency>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>credentials-binding</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>3.9</version>
+    </dependency>
 
-    <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    <scm>
-        <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    </scm>
+		<!-- Add Spring 6.1.x dependencies explicitly -->
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-core</artifactId>
+        <version>6.1.14</version>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-beans</artifactId>
+        <version>6.1.14</version>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-context</artifactId>
+        <version>6.1.14</version>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-web</artifactId>
+        <version>6.1.14</version>
+    </dependency>
 
-    <repositories>
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>https://repo.jenkins-ci.org/public/</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>https://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <configuration>
-                    <pluginFirstClassLoader>true</pluginFirstClassLoader>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+		<!-- Add Jackson dependencies compatible with Jenkins BOM -->
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>2.19.0</version>
+    </dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>2.19.0</version>
+    </dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>2.19.0</version>
+    </dependency>
+
+		<!-- SLF4J logging -->
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>2.0.16</version>
+    </dependency>
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <version>2.0.16</version>
+    </dependency>
+
+</dependencies>
+	<developers>
+		<developer>
+			<id>amigus</id>
+			<name>Adam Migus</name>
+			<email>adam@migus.org</email>
+		</developer>
+	</developers>
+
+	<url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
+	<scm>
+		<connection>
+			scm:git:https://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
+		<developerConnection>
+			scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
+		<url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
+	</scm>
+
+	<repositories>
+		<repository>
+			<id>repo.jenkins-ci.org</id>
+			<url>https://repo.jenkins-ci.org/public/</url>
+		</repository>
+	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>repo.jenkins-ci.org</id>
+			<url>https://repo.jenkins-ci.org/public/</url>
+		</pluginRepository>
+	</pluginRepositories>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.jenkins-ci.tools</groupId>
+				<artifactId>maven-hpi-plugin</artifactId>
+				<configuration>
+					<pluginFirstClassLoader>true</pluginFirstClassLoader>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

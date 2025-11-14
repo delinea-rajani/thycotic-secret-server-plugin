@@ -21,133 +21,170 @@ import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 
 @Extension
 @Symbol("secretServer")
 public class ServerConfiguration extends GlobalConfiguration {
-    public static final String DEFAULT_API_PATH_URI = "/api/v1";
-    public static final String DEFAULT_TOKEN_PATH_URI = "/oauth2/token";
-    public static final String DEFAULT_ENVIRONMENT_VARIABLE_PREFIX = "TSS_";
+	public static final String DEFAULT_ENVIRONMENT_VARIABLE_PREFIX = "TSS_";
+	public static final String API_VERSION = "v1";
 
-    /**
-     * Calls hudson.ExtensionList#lookupSingleton(ServerConfiguration.class)
-     * to get the singleton instance of this class which is how the Jenkins
-     * documentation recommends that it be accessed.
-     *
-     * @return the singleton instance of this class
-     */
-    public static ServerConfiguration get() {
-        return ExtensionList.lookupSingleton(ServerConfiguration.class);
-    }
+	/**
+	 * Calls hudson.ExtensionList#lookupSingleton(ServerConfiguration.class) to get
+	 * the singleton instance of this class which is how the Jenkins documentation
+	 * recommends that it be accessed.
+	 *
+	 * @return the singleton instance of this class
+	 */
+	public static ServerConfiguration get() {
+		return ExtensionList.lookupSingleton(ServerConfiguration.class);
+	}
 
-    /**
-     * Exposes the Base URL validation logic to {@link ServerSecret}
-     *
-     * @param value - the base URL to be validated
-     * @return {@link hudson.util.FormValidation#ok()} or
-     *         {@link hudson.util.FormValidation#error(String)}
-     */
-    static FormValidation checkBaseUrl(@QueryParameter final String value) {
-        try {
-            new URL(value);
-            return FormValidation.ok();
-        } catch (final MalformedURLException e) {
-            return FormValidation.error("Invalid URL");
-        }
-    }
+	/**
+	 * Exposes the Base URL validation logic to {@link ServerSecret}
+	 *
+	 * @param value - the base URL to be validated
+	 * @return {@link hudson.util.FormValidation#ok()} or
+	 *         {@link hudson.util.FormValidation#error(String)}
+	 */
+	static FormValidation checkBaseUrl(@QueryParameter final String value) {
+		try {
+			new URL(value);
+			return FormValidation.ok();
+		} catch (final MalformedURLException e) {
+			return FormValidation.error("Invalid URL");
+		}
+	}
 
-    private String credentialId, baseUrl, apiPathUri = DEFAULT_API_PATH_URI, tknPathUri = DEFAULT_TOKEN_PATH_URI,
-            environmentVariablePrefix = DEFAULT_ENVIRONMENT_VARIABLE_PREFIX;
+	private String credentialId, baseUrl, environmentVariablePrefix = DEFAULT_ENVIRONMENT_VARIABLE_PREFIX;
+	private String proxyHost;
+	private int proxyPort;
+	private String proxyUsername;
+	private Secret proxyPassword;
+	private String apiVersion = API_VERSION;
+	private String noProxyHosts;
+	private boolean useProxy;
 
-    /**
-     * Convenience method for {@link ServerBuildWrapper}
-     *
-     * @return the composition of {@link #getBaseUrl()} and {@link #getApiPathUri()}
-     */
-    String getAPIUrl() {
-        return getBaseUrl() + getApiPathUri();
-    }
+	public boolean isUseProxy() {
+	    return useProxy;
+	}
 
-    /**
-     * Convenience method for {@link ServerBuildWrapper}
-     *
-     * @return the composition of {@link #getBaseUrl()} and
-     *         {@link #getTokenPathUri()}
-     */
-    String getTokenUrl() {
-        return getBaseUrl() + getTokenPathUri();
-    }
+	@DataBoundSetter
+	public void setUseProxy(boolean useProxy) {
+	    this.useProxy = useProxy;
+	    save();
+	}
 
-    public ServerConfiguration() {
-        load();
-    }
+	public String getProxyHost() {
+		return proxyHost;
+	}
 
-    @POST
-    public FormValidation doCheckBaseUrl(@QueryParameter final String value) throws IOException, ServletException {
-        if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
-            return FormValidation.error("You do not have permission to perform this action");
-        }
-        return checkBaseUrl(value);
-    }
+	@DataBoundSetter
+	public void setProxyHost(String proxyHost) {
+		this.proxyHost = proxyHost;
+		save();
+	}
 
-    @POST
-    public ListBoxModel doFillCredentialIdItems(@AncestorInPath final Item item) {
-        if (item == null && !Jenkins.get().hasPermission(Jenkins.ADMINISTER) ||
-                item != null && !item.hasPermission(Item.CONFIGURE)) {
-            return new StandardListBoxModel();
-        }
-        return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, item, UserCredentials.class);
-    }
+	public int getProxyPort() {
+		return proxyPort;
+	}
 
-    public String getCredentialId() {
-        return credentialId;
-    }
+	@DataBoundSetter
+	public void setProxyPort(int proxyPort) {
+		this.proxyPort = proxyPort;
+		save();
+	}
 
-    @DataBoundSetter
-    public void setCredentialId(final String credentialId) {
-        this.credentialId = credentialId;
-        save();
-    }
+	public String getProxyUsername() {
+		return proxyUsername;
+	}
 
-    public String getBaseUrl() {
-        return baseUrl;
-    }
+	@DataBoundSetter
+	public void setProxyUsername(String proxyUsername) {
+		this.proxyUsername = proxyUsername;
+		save();
+	}
 
-    @DataBoundSetter
-    public void setBaseUrl(final String baseUrl) {
-        this.baseUrl = StringUtils.removeEnd(baseUrl, "/");
-        save();
-    }
+	public Secret getProxyPassword() {
+	    return proxyPassword;
+	}
 
-    public String getEnvironmentVariablePrefix() {
-        return environmentVariablePrefix;
-    }
+	@DataBoundSetter
+	public void setProxyPassword(Secret proxyPassword) {
+		this.proxyPassword = proxyPassword;
+		save();
+	}
 
-    @DataBoundSetter
-    public void setEnvironmentVariablePrefix(final String environmentVariablePrefix) {
-        this.environmentVariablePrefix = environmentVariablePrefix;
-        save();
-    }
+	public String getNoProxyHosts() {
+		return noProxyHosts;
+	}
 
-    public String getApiPathUri() {
-        return apiPathUri;
-    }
+	@DataBoundSetter
+	public void setNoProxyHosts(String noProxyHosts) {
+		this.noProxyHosts = noProxyHosts;
+		save();
+	}
 
-    @DataBoundSetter
-    public void setApiPathUri(final String apiPathUri) {
-        this.apiPathUri = "/" + StringUtils.strip(apiPathUri, "/");
-        save();
-    }
+	public ServerConfiguration() {
+		load();
+	}
 
-    public String getTokenPathUri() {
-        return tknPathUri;
-    }
+	@POST
+	public FormValidation doCheckBaseUrl(@QueryParameter final String value) throws IOException, ServletException {
+		if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
+			return FormValidation.error("You do not have permission to perform this action");
+		}
+		return checkBaseUrl(value);
+	}
 
-    @DataBoundSetter
-    public void setTokenPathUri(final String tokenPathUri) {
-        this.tknPathUri = StringUtils.strip(tokenPathUri);
-        save();
-    }
+	@POST
+	public ListBoxModel doFillCredentialIdItems(@AncestorInPath final Item item) {
+		if (item == null && !Jenkins.get().hasPermission(Jenkins.ADMINISTER)
+				|| item != null && !item.hasPermission(Item.CONFIGURE)) {
+			return new StandardListBoxModel();
+		}
+		return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, item, UserCredentials.class);
+	}
+
+	public String getCredentialId() {
+		return credentialId;
+	}
+
+	@DataBoundSetter
+	public void setCredentialId(final String credentialId) {
+		this.credentialId = credentialId;
+		save();
+	}
+
+	public String getBaseUrl() {
+		return baseUrl;
+	}
+
+	@DataBoundSetter
+	public void setBaseUrl(final String baseUrl) {
+		this.baseUrl = StringUtils.removeEnd(baseUrl, "/");
+		save();
+	}
+
+	public String getEnvironmentVariablePrefix() {
+		return environmentVariablePrefix;
+	}
+
+	@DataBoundSetter
+	public void setEnvironmentVariablePrefix(final String environmentVariablePrefix) {
+		this.environmentVariablePrefix = environmentVariablePrefix;
+		save();
+	}
+
+	public String getApiVersion() {
+		return apiVersion;
+	}
+
+	@DataBoundSetter
+	public void setApiVersion(final String apiVersion) {
+		this.apiVersion = apiVersion;
+		save();
+	}
 }

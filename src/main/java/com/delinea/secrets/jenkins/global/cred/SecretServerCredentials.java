@@ -23,6 +23,7 @@ import com.delinea.secrets.jenkins.wrapper.cred.UserCredentials;
 
 import hudson.Extension;
 import hudson.model.Item;
+import hudson.model.Descriptor.FormException;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -37,6 +38,12 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 	private final String credentialId;
 	private final String secretId;
 	private transient UsernamePassword vaultCredential;
+	private final String proxyHost;
+	private final String proxyPort;
+	private final String proxyUsername;
+	private final Secret proxyPassword;
+	private final String noProxyHosts;
+	private final boolean useProxy;
 
 	/**
 	 * Constructor to initialize the SecretServerCredentials object.
@@ -47,10 +54,11 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 	 * @param vaultUrl      - The URL of the Secret Server.
 	 * @param credentialId- The ID of the credentials stored in Jenkins.
 	 * @param secretId      - The ID of the secret stored in the Secret Server.
+	 * @throws FormException 
 	 */
 	@DataBoundConstructor
 	public SecretServerCredentials(final CredentialsScope scope, final String id, final String description, String vaultUrl,
-			String credentialId, String secretId, String usernameSlug,String passwordSlugName) {
+			String credentialId, String secretId, String usernameSlug, String passwordSlugName, String proxyHost, String proxyPort, String proxyUsername, Secret proxyPassword, String noProxyHosts, boolean useProxy) throws FormException {
 		super(scope, id, description, null, null);
 		this.usernameSlug = usernameSlug;
 		this.passwordSlugName = passwordSlugName;
@@ -58,6 +66,36 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 		this.credentialId = credentialId;
 		this.secretId = secretId;
 		this.vaultCredential = null;
+		this.proxyHost = proxyHost;
+		this.proxyPort = proxyPort;
+		this.proxyUsername = proxyUsername;
+		this.proxyPassword = proxyPassword;
+		this.noProxyHosts = noProxyHosts;
+		this.useProxy = useProxy;
+	}
+
+	public boolean isUseProxy() {
+		return useProxy;
+	}
+	
+	public String getProxyHost() {
+		return proxyHost;
+	}
+	
+	public String getProxyPort() {
+		return proxyPort;
+	}
+	
+	public String getProxyUsername() {
+		return proxyUsername;
+	}
+	
+	public Secret getProxyPassword() {
+	    return proxyPassword;
+	}
+	
+	public String getNoProxyHosts() {
+		return noProxyHosts;
 	}
 
 	public String getVaultUrl() {
@@ -79,7 +117,7 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 	public String getPasswordSlugName() {
 		return passwordSlugName;
 	}
-
+	
 	/**
 	 * Fetches the username from the Secret Server.
 	 *
@@ -129,8 +167,14 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 					throw new RuntimeException(
 							"UserCredentials with the specified credentialId not found in the folder context.");
 				}
+				String ph = useProxy ? proxyHost : null;
+				String pp = useProxy ? proxyPort : null;
+				String pu = useProxy ? proxyUsername : null;
+				String pw = (useProxy && proxyPassword != null) ? proxyPassword.getPlainText() : null;
+				String nph = useProxy ? noProxyHosts : null;
+	                
 				vaultCredential = new VaultClient().fetchCredentials(vaultUrl, secretId, credential.getUsername(),
-						credential.getPassword().getPlainText(), usernameSlug, passwordSlugName);
+						credential.getPassword().getPlainText(), usernameSlug, passwordSlugName,  ph, pp, pu, pw, nph);
 			} catch (Exception e) {
 				throw new RuntimeException("Failed to fetch credentials from vault. " + e.getMessage());
 			}
@@ -143,7 +187,7 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 
 		@Override
 		public String getDisplayName() {
-			return "Secret Server Vault Credentials";
+			return "Delinea Secret Server or Platform Vault Credentials";
 		}
 
 		/**
@@ -248,7 +292,13 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 				@QueryParameter("passwordSlugName") final String passwordSlugName,
 				@QueryParameter("vaultUrl") final String vaultUrl,
 				@QueryParameter("credentialId") final String credentialId,
-				@QueryParameter("secretId") final String secretId) {
+				@QueryParameter("secretId") final String secretId,
+				@QueryParameter("proxyHost") final String proxyHost,
+				@QueryParameter("proxyPort") final String proxyPort,
+				@QueryParameter("proxyUsername") final String proxyUsername,
+				@QueryParameter("proxyPassword") final Secret proxyPassword, 
+				@QueryParameter("noProxyHosts") final String noProxyHosts,
+				@QueryParameter("useProxy") final boolean useProxy) {
 			if ((owner == null && !Jenkins.get().hasPermission(CredentialsProvider.CREATE))
 		            || (owner != null && !owner.hasPermission(CredentialsProvider.CREATE))) {
 		        return FormValidation.error("You do not have permission to perform this action.");
@@ -272,12 +322,44 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 			
 			try {
 				UserCredentials credential = UserCredentials.get(credentialId, owner);
+				String ph = useProxy ? proxyHost : null;
+				String pp = useProxy ? proxyPort : null;
+				String pu = useProxy ? proxyUsername : null;
+				String pw = (useProxy && proxyPassword != null) ? proxyPassword.getPlainText() : null;
+				String nph = useProxy ? noProxyHosts : null;
+	                
 				new VaultClient().fetchCredentials(vaultUrl, secretId, credential.getUsername(),
-						credential.getPassword().getPlainText(), usernameSlug,passwordSlugName);
+						credential.getPassword().getPlainText(), usernameSlug,passwordSlugName, ph, pp, pu, pw, nph);
 				return FormValidation.ok("Connection successful.");
-			} catch (Exception e) {
-				return FormValidation.error("Failed to establish connection: " + e.getMessage());
-			}
+			}  catch (Exception e) {
+		        Throwable root = e;
+		        while (root.getCause() != null) {
+		            root = root.getCause();
+		        }
+
+		        String message;
+		        if (root instanceof java.net.UnknownHostException) {
+		            message = "Host not found: " + root.getMessage();
+		        } else if (root instanceof org.springframework.web.client.HttpClientErrorException) {
+		            int status = ((org.springframework.web.client.HttpClientErrorException) root)
+		                    .getStatusCode().value();
+		            if (status == 407) {
+		                message = "Proxy authentication failed (HTTP 407).";
+		            } else if (status == 400) {
+		                message = "Access denied or invalid client credentials (HTTP 400).";
+		            } else if (status == 403) {
+		                message = "Access forbidden (HTTP 403).";
+		            } else {
+		                message = "HTTP error (status " + status + ").";
+		            }
+		        } else if (root instanceof java.io.IOException) {
+		            message = "Network I/O error: " + root.getMessage();
+		        } else {
+		            message = "Unexpected error: " + root.getMessage();
+		        }
+
+		        return FormValidation.error("Failed to establish connection: " + message);
+		    }
 		}
 	}
 }

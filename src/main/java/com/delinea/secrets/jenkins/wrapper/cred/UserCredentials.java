@@ -17,6 +17,7 @@ import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
+import hudson.model.Descriptor.FormException;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
 
@@ -53,7 +54,7 @@ public class UserCredentials extends UsernamePasswordCredentialsImpl implements 
 
     @DataBoundConstructor
     public UserCredentials(final CredentialsScope scope, final String id, final String description,
-            final String username, final String password) {
+            final String username, final String password) throws FormException {
         super(scope, id, description, username, password);
     }
 
@@ -62,7 +63,7 @@ public class UserCredentials extends UsernamePasswordCredentialsImpl implements 
 
         @Override
         public String getDisplayName() {
-            return "SecretServer User Credentials";
+            return "Delinea Secret Server Application or Platform Service Account Credentials";
         }
     }
 }
