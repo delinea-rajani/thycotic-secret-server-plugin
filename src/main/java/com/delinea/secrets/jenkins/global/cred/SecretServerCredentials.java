@@ -37,7 +37,6 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 	private final String vaultUrl;
 	private final String credentialId;
 	private final String secretId;
-	private transient UsernamePassword vaultCredential;
 	private final String proxyHost;
 	private final String proxyPort;
 	private final String proxyUsername;
@@ -65,7 +64,6 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 		this.vaultUrl = vaultUrl;
 		this.credentialId = credentialId;
 		this.secretId = secretId;
-		this.vaultCredential = null;
 		this.proxyHost = proxyHost;
 		this.proxyPort = proxyPort;
 		this.proxyUsername = proxyUsername;
@@ -160,26 +158,26 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 	 *                          Server.
 	 */
 	private UsernamePassword getVaultCredential(@Nullable Item contextItem) {
-		if (vaultCredential == null) {
-			try {
-				UserCredentials credential = UserCredentials.get(credentialId, contextItem);
-				if (credential == null) {
-					throw new RuntimeException(
-							"UserCredentials with the specified credentialId not found in the folder context.");
-				}
-				String ph = useProxy ? proxyHost : null;
-				String pp = useProxy ? proxyPort : null;
-				String pu = useProxy ? proxyUsername : null;
-				String pw = (useProxy && proxyPassword != null) ? proxyPassword.getPlainText() : null;
-				String nph = useProxy ? noProxyHosts : null;
-	                
-				vaultCredential = new VaultClient().fetchCredentials(vaultUrl, secretId, credential.getUsername(),
-						credential.getPassword().getPlainText(), usernameSlug, passwordSlugName,  ph, pp, pu, pw, nph);
-			} catch (Exception e) {
-				throw new RuntimeException("Failed to fetch credentials from vault. " + e.getMessage());
-			}
-		}
-		return vaultCredential;
+	    try {
+	        UserCredentials credential = UserCredentials.get(credentialId, contextItem);
+
+	        String ph = useProxy ? proxyHost : null;
+	        String pp = useProxy ? proxyPort : null;
+	        String pu = useProxy ? proxyUsername : null;
+	        String pw = (useProxy && proxyPassword != null) ? proxyPassword.getPlainText() : null;
+	        String nph = useProxy ? noProxyHosts : null;
+
+	        return new VaultClient().fetchCredentials(
+	            vaultUrl, secretId,
+	            credential.getUsername(),
+	            credential.getPassword().getPlainText(),
+	            usernameSlug, passwordSlugName,
+	            ph, pp, pu, pw, nph
+	        );
+
+	    } catch (Exception e) {
+	        throw new RuntimeException("Failed to fetch credentials from vault. " + e.getMessage(), e);
+	    }
 	}
 
 	@Extension
