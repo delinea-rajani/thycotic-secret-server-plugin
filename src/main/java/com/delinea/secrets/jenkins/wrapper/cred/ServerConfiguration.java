@@ -29,7 +29,6 @@ import jenkins.model.Jenkins;
 @Symbol("secretServer")
 public class ServerConfiguration extends GlobalConfiguration {
 	public static final String DEFAULT_ENVIRONMENT_VARIABLE_PREFIX = "TSS_";
-	public static final String API_VERSION = "v1";
 
 	/**
 	 * Calls hudson.ExtensionList#lookupSingleton(ServerConfiguration.class) to get
@@ -63,7 +62,6 @@ public class ServerConfiguration extends GlobalConfiguration {
 	private int proxyPort;
 	private String proxyUsername;
 	private Secret proxyPassword;
-	private String apiVersion = API_VERSION;
 	private String noProxyHosts;
 	private boolean useProxy;
 
@@ -175,16 +173,6 @@ public class ServerConfiguration extends GlobalConfiguration {
 	@DataBoundSetter
 	public void setEnvironmentVariablePrefix(final String environmentVariablePrefix) {
 		this.environmentVariablePrefix = environmentVariablePrefix;
-		save();
-	}
-
-	public String getApiVersion() {
-		return apiVersion;
-	}
-
-	@DataBoundSetter
-	public void setApiVersion(final String apiVersion) {
-		this.apiVersion = apiVersion;
 		save();
 	}
 }

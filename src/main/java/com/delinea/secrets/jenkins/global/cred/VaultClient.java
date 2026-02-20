@@ -22,13 +22,14 @@ public class VaultClient {
 	private static final String USERNAME_PROPERTY = "server.username";
 	private static final String PASSWORD_PROPERTY = "server.password";
 	private static final String SERVER_URL_PROPERTY = "server.url";
+	private static final String AUTO_COMMENT = "autoComment";
 
 	public VaultClient() {
 	}
 
 	public UsernamePassword fetchCredentials(String vaultUrl, String secretId, String username, String password,
 			String usernameSlug, String passwordSlugName, String proxyHost, String proxyPort, String proxyUsername,
-			String proxyPassword, String noProxyHosts) throws Exception {
+			String proxyPassword, String noProxyHosts, String autoComment) throws Exception {
 
 		Map<String, Object> properties = new HashMap<>();
 		String trimmedUrl = StringUtils.removeEnd(vaultUrl, "/");
@@ -38,7 +39,7 @@ public class VaultClient {
 		}
 		properties.put(USERNAME_PROPERTY, username);
 		properties.put(PASSWORD_PROPERTY, password);
-
+		properties.put(AUTO_COMMENT, autoComment);
 		Map<String, String> proxyConfig = DelineaProxyUtil.resolveProxy(trimmedUrl, proxyHost, proxyPort, proxyUsername,
 				proxyPassword, noProxyHosts);
 
