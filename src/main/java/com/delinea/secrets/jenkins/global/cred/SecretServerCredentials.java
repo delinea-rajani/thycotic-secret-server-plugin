@@ -168,7 +168,9 @@ public class SecretServerCredentials extends UsernamePasswordCredentialsImpl imp
 	private UsernamePassword getVaultCredential(@Nullable Item contextItem) {
 	    try {
 	        UserCredentials credential = UserCredentials.get(credentialId, contextItem);
-
+	        if (credential == null) {
+	            throw new RuntimeException("UserCredentials not found for credentialId: " + credentialId);
+	        }
 	        String ph = useProxy ? proxyHost : null;
 	        String pp = useProxy ? proxyPort : null;
 	        String pu = useProxy ? proxyUsername : null;
