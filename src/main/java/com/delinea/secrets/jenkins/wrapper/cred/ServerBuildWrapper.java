@@ -35,6 +35,7 @@ public class ServerBuildWrapper extends SimpleBuildWrapper {
     private static final String USERNAME_PROPERTY = "server.username";
     private static final String PASSWORD_PROPERTY = "server.password";
     private static final String SERVER_URL_PROPERTY = "server.url";
+    private static final String AUTO_COMMENT = "autoComment";
 
     private List<ServerSecret> secrets;
     private List<String> valuesToMask = new ArrayList<>();
@@ -77,7 +78,7 @@ public class ServerBuildWrapper extends SimpleBuildWrapper {
             final String effectiveUrl = StringUtils.isNotBlank(overrideBaseURL)
                     ? overrideBaseURL : configuration.getBaseUrl();
             properties.put(SERVER_URL_PROPERTY, effectiveUrl);
-
+            properties.put(AUTO_COMMENT, serverSecret.getAutoComment());
             final String overrideCredId = serverSecret.getCredentialId();
             final UserCredentials credential = StringUtils.isNotBlank(overrideCredId)
                     ? UserCredentials.get(overrideCredId, build.getParent())

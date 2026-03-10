@@ -6,8 +6,6 @@ import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
@@ -15,6 +13,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
+
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
@@ -32,19 +32,25 @@ import jenkins.model.Jenkins;
 public class ServerSecret extends AbstractDescribableImpl<ServerSecret> {
     private final int id;
     private final List<Mapping> mappings;
+	private final String autoComment;
 
-    public int getId() {
-        return id;
-    }
+	public String getAutoComment() {
+		return autoComment;
+	}
 
-    public List<Mapping> getMappings() {
+	public int getId() {
+		return id;
+	}
+
+	public List<Mapping> getMappings() {
         return mappings;
     }
 
     @DataBoundConstructor
-    public ServerSecret(final int id, final List<Mapping> mappings) {
+    public ServerSecret(final int id, final List<Mapping> mappings,final String autoComment) {
         this.id = id;
         this.mappings = mappings;
+		this.autoComment = autoComment;
     }
 
     private String baseUrl, credentialId;
@@ -65,7 +71,7 @@ public class ServerSecret extends AbstractDescribableImpl<ServerSecret> {
     @DataBoundSetter
     public void setCredentialId(final String credentialId) {
         this.credentialId = credentialId;
-    }
+	}
 
     public static class Mapping extends AbstractDescribableImpl<Mapping> {
         private final String environmentVariable, field;
@@ -167,5 +173,5 @@ public class ServerSecret extends AbstractDescribableImpl<ServerSecret> {
                 return FormValidation.ok();
             return ServerConfiguration.checkBaseUrl(value);
         }
-    } // TODO support for credential domains and permissions
+    }
 }
